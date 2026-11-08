@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020817">
+<title>ARES • Neural Interface</title>
+<style>
+:root{--cyan:#62e6ff;--blue:#168cff;--ice:#dffaff;--muted:#83a9c9;--line:#38bce755;--panel:#06172bcc}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#020817;color:var(--ice);font-family:Inter,system-ui,Arial,sans-serif}
+body{background:radial-gradient(ellipse at 50% 37%,#0b2c55 0,#06162d 37%,#020817 78%);min-height:100dvh}
+.app{max-width:760px;min-height:100dvh;margin:auto;padding:env(safe-area-inset-top) 15px env(safe-area-inset-bottom);display:flex;flex-direction:column;position:relative;overflow:hidden}
+.app:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.17;background-image:linear-gradient(#2bbaff22 1px,transparent 1px),linear-gradient(90deg,#2bbaff22 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,transparent,#000 22%,#000 75%,transparent)}
+header{height:58px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);position:relative;z-index:1}
+.brand{font-size:13px;letter-spacing:3px;color:var(--cyan);font-weight:700}.brand small{color:#8baac5;font-weight:400}
+.online{font-size:10px;letter-spacing:1.5px;color:#7fffd4}.dot{display:inline-block;width:7px;height:7px;background:#56ffc5;border-radius:50%;box-shadow:0 0 10px #56ffc5;margin-right:6px}
+main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:1;padding:12px 0 10px}
+.eyebrow{font-size:9px;letter-spacing:3px;color:#75b9dc;margin:2px 0 5px}
+.core{width:min(63vw,280px);aspect-ratio:1;position:relative;display:grid;place-items:center;margin:0 auto 4px}
+.orbit{position:absolute;inset:5%;border:1px solid #54dfff99;border-radius:50%;box-shadow:0 0 22px #168cff55,inset 0 0 22px #168cff22;animation:spin 24s linear infinite}
+.orbit:before,.orbit:after{content:"";position:absolute;inset:9%;border:1px dashed #83eaff88;border-radius:50%;transform:rotateX(62deg) rotate(30deg)}
+.orbit:after{inset:-7%;border:1px solid #248dff66;transform:rotateX(68deg) rotate(-25deg)}
+.orbit2{position:absolute;inset:17%;border:1px solid #55cfff66;border-radius:50%;transform:rotateX(68deg) rotate(-32deg);animation:spin 13s linear infinite reverse}
+.coreball{width:48%;aspect-ratio:1;border-radius:50%;position:relative;background:radial-gradient(circle at 33% 27%,#f1ffff 0,#72f1ff 4%,#168fe8 20%,#0751a8 42%,#031a43 68%,#010714 78%);box-shadow:0 0 24px #28caff,0 0 65px #087cffaa,0 0 110px #086aff66,inset -13px -18px 24px #000c;animation:pulse 3s ease-in-out infinite}
+.coreball:before{content:"";position:absolute;inset:13%;border:1px solid #a9f8ffbb;border-radius:50%;box-shadow:0 0 14px #51dfff;transform:rotateX(70deg) rotate(35deg)}
+.coreball:after{content:"";position:absolute;inset:27% -20%;border-top:2px solid #b3faffcc;border-bottom:1px solid #49c9ff99;border-radius:50%;transform:rotate(-24deg);filter:drop-shadow(0 0 7px #22cfff)}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{50%{transform:scale(1.05);filter:brightness(1.25)}}
+h1{margin:0;font-size:29px;letter-spacing:10px;text-indent:10px;text-shadow:0 0 18px #30cfff}
+.tag{font-size:9px;letter-spacing:3px;color:#83cce9;margin:5px 0 12px}
+.wave{height:26px;display:flex;gap:4px;align-items:center;justify-content:center;margin:0 0 8px}
+.wave i{width:3px;height:8px;background:var(--cyan);border-radius:4px;box-shadow:0 0 8px #2bcfff;animation:wave .8s ease-in-out infinite alternate}
+.wave i:nth-child(2n){animation-delay:.2s}.wave i:nth-child(3n){animation-delay:.4s}
+@keyframes wave{to{height:23px;opacity:.45}}
+.greeting{font-size:13px;color:#c4eaff;margin:0 0 12px;text-align:center}
+.actions{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+button{font:inherit;color:#e8fbff;border:1px solid #4edaff99;background:linear-gradient(135deg,#0b3a68dd,#07172ddd);border-radius:30px;padding:11px 17px;font-size:11px;letter-spacing:1px;box-shadow:0 0 18px #087bff33}
+button.primary{background:linear-gradient(135deg,#087bc9,#07366b);box-shadow:0 0 24px #139fff66}
+button:active{transform:scale(.97)}
+#feedback{min-height:18px;text-align:center;font-size:10px;color:#8edfff;margin:9px 0 10px}
+.grid{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 10px}
+.panel{background:linear-gradient(145deg,#0a2440cc,#041326dd);border:1px solid var(--line);border-radius:12px;padding:10px 8px;min-width:0;box-shadow:inset 0 0 18px #0c6caa12}
+.panel .label{font-size:8px;color:#7faac8;letter-spacing:1.4px}.panel .value{font-size:13px;color:#73e5ff;font-weight:700;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.console{width:100%;background:#041225d9;border:1px solid #2da9d955;border-radius:13px;padding:11px 12px;margin:0 0 8px}
+.console-head{display:flex;justify-content:space-between;font-size:9px;letter-spacing:1.5px;color:#70dfff;margin-bottom:7px}
+#log{font-size:11px;line-height:1.45;color:#b5d9ed;min-height:32px;max-height:62px;overflow:auto}
+footer{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding:11px 2px 14px;color:#7199b9;font-size:8px;letter-spacing:1.2px;position:relative;z-index:1}
+@media(min-height:780px){main{padding-top:22px}.core{width:min(67vw,310px);margin-bottom:8px}.grid{margin-top:8px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="brand">ARES <small>/ NEURAL CORE</small></div><div class="online"><span class="dot"></span>ONLINE</div></header>
+<main>
+<div class="eyebrow">ADVANCED RESPONSE &amp; EXECUTION SYSTEM</div>
+<div class="core" aria-label="Animated ARES energy core"><div class="orbit"></div><div class="orbit2"></div><div class="coreball"></div></div>
+<h1>ARES</h1><div class="tag">INTELLIGENCE • INTERFACE • CONTROL</div>
+<div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<p class="greeting">Welcome back, Boss. What shall we do?</p>
+<div class="actions"><button class="primary" id="listen">◉ &nbsp; START LISTENING</button><button id="language">LANG: বাংলা</button><button id="demo">SYSTEM CHECK</button></div>
+<div id="feedback">Tap START LISTENING and allow microphone access…</div>
+<div class="grid">
+<div class="panel"><div class="label">LOCAL TIME</div><div class="value" id="clock">--:--</div></div>
+<div class="panel"><div class="label">DATE</div><div class="value" id="date">---</div></div>
+<div class="panel"><div class="label">CORE STATUS</div><div class="value">STANDBY</div></div>
+</div>
+<div class="console"><div class="console-head"><span>COMMAND CONSOLE</span><span>SECURE LINK</span></div><div id="log">ARES interface initialized. AI brain and phone controls are not connected yet.</div></div>
+</main>
+<footer><span>ARES MOBILE • BUILD 0.2</span><span>BLUE NEURAL SYSTEM</span></footer>
+</div>
+<script>
+function updateClock(){const d=new Date();document.getElementById('clock').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});document.getElementById('date').textContent=d.toLocaleDateString([],{day:'2-digit',month:'short',year:'numeric'});}
+updateClock();setInterval(updateClock,1000);
+const feedback=document.getElementById('feedback'),log=document.getElementById('log');
+const listenBtn=document.getElementById('listen'),langBtn=document.getElementById('language');
+let currentLang='bn-BD', recognition=null, listening=false;
+
+function setStatus(message, detail){
+  feedback.textContent=message;
+  if(detail) log.textContent=detail;
+}
+langBtn.onclick=()=>{
+  currentLang=currentLang==='bn-BD'?'en-US':'bn-BD';
+  langBtn.textContent=currentLang==='bn-BD'?'LANG: বাংলা':'LANG: English';
+  setStatus(currentLang==='bn-BD'?'বাংলা ভাষা নির্বাচিত':'English selected',
+            'VOICE LANGUAGE: '+currentLang);
+};
+document.getElementById('demo').onclick=()=>{
+  setStatus('All visual systems nominal.',
+    'SYSTEM CHECK: Interface online • Clock synchronized • Voice input ready to test • AI connection pending.');
+};
+
+async function startListening(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!window.isSecureContext){
+    setStatus('HTTPS দরকার। Netlify-এর https:// লিংক দিয়ে খুলুন।','VOICE ERROR: Page is not in a secure context.');
+    return;
+  }
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    setStatus('এই browser-এ microphone access পাওয়া যাচ্ছে না। Chrome দিয়ে চেষ্টা করুন।','MIC ERROR: getUserMedia unavailable.');
+    return;
+  }
+  if(!SR){
+    setStatus('এই browser-এ speech recognition support নেই। Chrome দিয়ে ARES খুলে চেষ্টা করুন।','VOICE ERROR: SpeechRecognition API unavailable.');
+    return;
+  }
+  try{
+    setStatus('Microphone permission যাচাই হচ্ছে…','MICROPHONE: requesting permission.');
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    stream.getTracks().forEach(track=>track.stop());
+
+    recognition=new SR();
+    recognition.lang=currentLang;
+    recognition.interimResults=true;
+    recognition.continuous=false;
+    recognition.maxAlternatives=1;
+
+    recognition.onstart=()=>{
+      listening=true;
+      listenBtn.textContent='◉  LISTENING…';
+      setStatus('শুনছি… এখন কথা বলো।','MICROPHONE: active • LANGUAGE: '+currentLang);
+    };
+    recognition.onresult=(event)=>{
+      let interim='',finalText='';
+      for(let i=event.resultIndex;i<event.results.length;i++){
+        const text=event.results[i][0].transcript;
+        if(event.results[i].isFinal) finalText+=text;
+        else interim+=text;
+      }
+      if(finalText){
+        setStatus('শুনেছি: '+finalText,'VOICE INPUT: '+finalText+' | AI response connection is not connected yet.');
+      }else if(interim){
+        feedback.textContent='শুনছি: '+interim;
+      }
+    };
+    recognition.onerror=(event)=>{
+      const messages={
+        'not-allowed':'Microphone permission blocked. Brave Site settings থেকে Microphone Allow করো।',
+        'service-not-allowed':'Browser speech service blocked. Chrome দিয়ে চেষ্টা করো।',
+        'no-speech':'কোনো কথা শোনা যায়নি। আবার চাপ দিয়ে একটু জোরে বলো।',
+        'audio-capture':'Microphone পাওয়া যাচ্ছে না। অন্য app-এর microphone ব্যবহার বন্ধ করো।',
+        'network':'Speech service-এর network সমস্যা। Internet চালু আছে কি না দেখো।',
+        'aborted':'Voice input বন্ধ হয়েছে।'
+      };
+      setStatus(messages[event.error]||('Voice error: '+event.error),'VOICE ERROR: '+event.error);
+    };
+    recognition.onend=()=>{
+      listening=false;
+      listenBtn.textContent='◉  START LISTENING';
+      if(feedback.textContent.includes('শুনছি…')) setStatus('শোনা শেষ। আবার চেষ্টা করতে START LISTENING চাপো।','MICROPHONE: stopped.');
+    };
+    recognition.start();
+  }catch(error){
+    const msg=error.name==='NotAllowedError'
+      ?'Microphone permission Allow করো।'
+      :error.name==='NotFoundError'
+      ?'ফোনে microphone পাওয়া যায়নি।'
+      :'Microphone চালু হয়নি: '+error.name;
+    setStatus(msg,'MICROPHONE ERROR: '+error.name);
+  }
+}
+listenBtn.onclick=()=>{
+  if(listening&&recognition){try{recognition.stop();}catch(e){}}
+  else startListening();
+};
+</script>
+</body>
+</html>
