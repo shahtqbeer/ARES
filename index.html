@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -37,6 +38,7 @@ h1{margin:0;font-size:29px;letter-spacing:10px;text-indent:10px;text-shadow:0 0 
 button{font:inherit;color:#e8fbff;border:1px solid #4edaff99;background:linear-gradient(135deg,#0b3a68dd,#07172ddd);border-radius:30px;padding:11px 17px;font-size:11px;letter-spacing:1px;box-shadow:0 0 18px #087bff33}
 button.primary{background:linear-gradient(135deg,#087bc9,#07366b);box-shadow:0 0 24px #139fff66}
 button:active{transform:scale(.97)}
+button:disabled{opacity:.5}
 #feedback{min-height:18px;text-align:center;font-size:10px;color:#8edfff;margin:9px 0 10px}
 .grid{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 10px}
 .panel{background:linear-gradient(145deg,#0a2440cc,#041326dd);border:1px solid var(--line);border-radius:12px;padding:10px 8px;min-width:0;box-shadow:inset 0 0 18px #0c6caa12}
@@ -57,67 +59,130 @@ footer{display:flex;justify-content:space-between;gap:8px;border-top:1px solid v
 <h1>ARES</h1><div class="tag">INTELLIGENCE • INTERFACE • CONTROL</div>
 <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
 <p class="greeting">Welcome back, Boss. What shall we do?</p>
-<div class="actions"><button class="primary" id="listen">◉ &nbsp; START LISTENING</button><button id="language">LANG: বাংলা</button><button id="demo">SYSTEM CHECK</button></div>
+<div class="actions">
+<button class="primary" id="listen">◉ &nbsp; START LISTENING</button>
+<button id="speak">◖ &nbsp; TEST ARES VOICE</button>
+<button id="language">LANG: বাংলা</button>
+<button id="demo">SYSTEM CHECK</button>
+</div>
 <div id="feedback">Tap START LISTENING and allow microphone access…</div>
 <div class="grid">
 <div class="panel"><div class="label">LOCAL TIME</div><div class="value" id="clock">--:--</div></div>
 <div class="panel"><div class="label">DATE</div><div class="value" id="date">---</div></div>
-<div class="panel"><div class="label">CORE STATUS</div><div class="value">STANDBY</div></div>
+<div class="panel"><div class="label">CORE STATUS</div><div class="value" id="coreStatus">STANDBY</div></div>
 </div>
-<div class="console"><div class="console-head"><span>COMMAND CONSOLE</span><span>SECURE LINK</span></div><div id="log">ARES interface initialized. AI brain and phone controls are not connected yet.</div></div>
+<div class="console"><div class="console-head"><span>COMMAND CONSOLE</span><span>VOICE LINK</span></div><div id="log">ARES interface initialized. Voice output is ready to test. AI brain and phone controls are not connected yet.</div></div>
 </main>
-<footer><span>ARES MOBILE • BUILD 0.2</span><span>BLUE NEURAL SYSTEM</span></footer>
+<footer><span>ARES MOBILE • BUILD 0.3</span><span>BLUE NEURAL SYSTEM</span></footer>
 </div>
 <script>
 function updateClock(){const d=new Date();document.getElementById('clock').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});document.getElementById('date').textContent=d.toLocaleDateString([],{day:'2-digit',month:'short',year:'numeric'});}
 updateClock();setInterval(updateClock,1000);
+
 const feedback=document.getElementById('feedback'),log=document.getElementById('log');
 const listenBtn=document.getElementById('listen'),langBtn=document.getElementById('language');
-let currentLang='bn-BD', recognition=null, listening=false;
+const speakBtn=document.getElementById('speak'),coreStatus=document.getElementById('coreStatus');
+let currentLang='bn-BD', recognition=null, listening=false, selectedVoice=null;
 
 function setStatus(message, detail){
   feedback.textContent=message;
   if(detail) log.textContent=detail;
 }
+function loadVoices(){
+  if(!('speechSynthesis' in window)) return [];
+  return window.speechSynthesis.getVoices();
+}
+function chooseVoice(){
+  const voices=loadVoices();
+  if(!voices.length){selectedVoice=null;return;}
+  const langPrefix=currentLang.toLowerCase().split('-')[0];
+  const matching=voices.filter(v=>v.lang.toLowerCase()===currentLang.toLowerCase());
+  const sameLanguage=matching.length?matching:voices.filter(v=>v.lang.toLowerCase().startsWith(langPrefix));
+  const preferredName=currentLang==='bn-BD'
+    ? /male|man|david|mark|daniel|james|george|aaron|guy|alex|fred/i
+    : /female|woman|samantha|victoria|zira|susan|karen|moira|tessa|ava|jenny|aria|sara|lisa/i;
+  selectedVoice=sameLanguage.find(v=>preferredName.test(v.name))
+    ||sameLanguage.find(v=>v.default)
+    ||sameLanguage[0]
+    ||voices.find(v=>v.default)
+    ||voices[0];
+}
+if('speechSynthesis' in window){
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged=chooseVoice;
+}
+function speakARES(message){
+  if(!('speechSynthesis' in window)){
+    setStatus('এই browser-এ voice output support নেই। Chrome দিয়ে চেষ্টা করো।','VOICE OUTPUT ERROR: speechSynthesis unavailable.');
+    return;
+  }
+  window.speechSynthesis.cancel();
+  chooseVoice();
+  const utterance=new SpeechSynthesisUtterance(message);
+  utterance.lang=currentLang;
+  if(selectedVoice) utterance.voice=selectedVoice;
+  utterance.rate=currentLang==='bn-BD'?0.88:0.94;
+  utterance.pitch=currentLang==='bn-BD'?0.72:1.12;
+  utterance.volume=1;
+  utterance.onstart=()=>{
+    coreStatus.textContent='SPEAKING';
+    setStatus('ARES কথা বলছে…','VOICE OUTPUT: speaking • '+currentLang);
+  };
+  utterance.onend=()=>{
+    coreStatus.textContent='STANDBY';
+    setStatus('ARES-এর কথা শেষ।','VOICE OUTPUT: completed.');
+  };
+  utterance.onerror=(event)=>{
+    coreStatus.textContent='STANDBY';
+    setStatus('Voice চালু হয়নি। Browser-এর sound/voice settings দেখো।','VOICE OUTPUT ERROR: '+event.error);
+  };
+  window.speechSynthesis.speak(utterance);
+}
+speakBtn.onclick=()=>{
+  const sample=currentLang==='bn-BD'
+    ?'হ্যালো বস। আমি এরেস। তোমার নির্দেশের অপেক্ষায় আছি।'
+    :'Hello Boss. I am ARES. Standing by for your instructions.';
+  speakARES(sample);
+};
 langBtn.onclick=()=>{
   currentLang=currentLang==='bn-BD'?'en-US':'bn-BD';
   langBtn.textContent=currentLang==='bn-BD'?'LANG: বাংলা':'LANG: English';
+  chooseVoice();
   setStatus(currentLang==='bn-BD'?'বাংলা ভাষা নির্বাচিত':'English selected',
-            'VOICE LANGUAGE: '+currentLang);
+    'VOICE LANGUAGE: '+currentLang+' • '+(currentLang==='bn-BD'?'DEEP MASCULINE PROFILE':'SOFT SWEET FEMININE PROFILE')+' • INPUT AND OUTPUT LANGUAGE UPDATED.');
 };
 document.getElementById('demo').onclick=()=>{
   setStatus('All visual systems nominal.',
-    'SYSTEM CHECK: Interface online • Clock synchronized • Voice input ready to test • AI connection pending.');
+    'SYSTEM CHECK: Interface online • Clock synchronized • Microphone ready • Speech output ready to test • AI connection pending.');
 };
 
 async function startListening(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!window.isSecureContext){
-    setStatus('HTTPS দরকার। Netlify-এর https:// লিংক দিয়ে খুলুন।','VOICE ERROR: Page is not in a secure context.');
+    setStatus('HTTPS দরকার। GitHub Pages-এর https:// লিংক দিয়ে খুলুন।','VOICE ERROR: Page is not in a secure context.');
     return;
   }
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-    setStatus('এই browser-এ microphone access পাওয়া যাচ্ছে না। Chrome দিয়ে চেষ্টা করুন।','MIC ERROR: getUserMedia unavailable.');
+    setStatus('এই browser-এ microphone access পাওয়া যাচ্ছে না। Chrome দিয়ে চেষ্টা করো।','MIC ERROR: getUserMedia unavailable.');
     return;
   }
   if(!SR){
-    setStatus('এই browser-এ speech recognition support নেই। Chrome দিয়ে ARES খুলে চেষ্টা করুন।','VOICE ERROR: SpeechRecognition API unavailable.');
+    setStatus('এই browser-এ speech recognition support নেই। Chrome দিয়ে ARES খুলে চেষ্টা করো।','VOICE ERROR: SpeechRecognition API unavailable.');
     return;
   }
   try{
     setStatus('Microphone permission যাচাই হচ্ছে…','MICROPHONE: requesting permission.');
     const stream=await navigator.mediaDevices.getUserMedia({audio:true});
     stream.getTracks().forEach(track=>track.stop());
-
     recognition=new SR();
     recognition.lang=currentLang;
     recognition.interimResults=true;
     recognition.continuous=false;
     recognition.maxAlternatives=1;
-
     recognition.onstart=()=>{
       listening=true;
       listenBtn.textContent='◉  LISTENING…';
+      coreStatus.textContent='LISTENING';
       setStatus('শুনছি… এখন কথা বলো।','MICROPHONE: active • LANGUAGE: '+currentLang);
     };
     recognition.onresult=(event)=>{
@@ -129,6 +194,10 @@ async function startListening(){
       }
       if(finalText){
         setStatus('শুনেছি: '+finalText,'VOICE INPUT: '+finalText+' | AI response connection is not connected yet.');
+        const acknowledgement=currentLang==='bn-BD'
+          ?'তোমার কথা শুনেছি বস। তবে আমার এ আই ব্রেইন এখনো সংযুক্ত হয়নি।'
+          :'I heard you, Boss. My AI brain is not connected yet.';
+        speakARES(acknowledgement);
       }else if(interim){
         feedback.textContent='শুনছি: '+interim;
       }
@@ -142,11 +211,13 @@ async function startListening(){
         'network':'Speech service-এর network সমস্যা। Internet চালু আছে কি না দেখো।',
         'aborted':'Voice input বন্ধ হয়েছে।'
       };
+      coreStatus.textContent='STANDBY';
       setStatus(messages[event.error]||('Voice error: '+event.error),'VOICE ERROR: '+event.error);
     };
     recognition.onend=()=>{
       listening=false;
       listenBtn.textContent='◉  START LISTENING';
+      if(coreStatus.textContent==='LISTENING') coreStatus.textContent='STANDBY';
       if(feedback.textContent.includes('শুনছি…')) setStatus('শোনা শেষ। আবার চেষ্টা করতে START LISTENING চাপো।','MICROPHONE: stopped.');
     };
     recognition.start();
